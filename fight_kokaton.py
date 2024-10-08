@@ -139,6 +139,34 @@ class Bomb:
             self.vy *= -1
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
+class Score:
+    """
+    スコアを表示するクラス
+    """
+    def __init__(self):
+        """
+        スコアの初期化とフォントの設定
+        """
+        self.fonto = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)  # フォント設定
+        self.score = 0  # 初期スコア
+        self.img = self.fonto.render(f"Score: {self.score}", 0, (0, 0, 255))  # スコア画像
+        self.rct = self.img.get_rect()
+        self.rct.center = 100, HEIGHT - 50  # スコア表示位置
+
+    def update(self, screen: pg.Surface):
+        """
+        スコアを更新して画面に描画する
+        """
+        self.img = self.fonto.render(f"Score: {self.score}", 0, (0, 0, 255))
+        screen.blit(self.img, self.rct)
+
+    def add_score(self, points: int):
+        """
+        スコアを加算する
+        引数: points（加算するスコア）
+        """
+        self.score += points
+
 
 
 def main():
@@ -149,8 +177,10 @@ def main():
     # bomb = Bomb((255, 0, 0), 10)
     beam=None
     bombs =[Bomb((255,0,0),10) for _ in range(NUM_OF_BOMBS)]
+
     clock = pg.time.Clock()
     tmr = 0
+    score = Score()
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -169,15 +199,20 @@ def main():
                 pg.display.update()
                 time.sleep(1)
                 return
-            
-        if beam is not None:
-            for j,bomb in enumerate(bombs):
+        for j,bomb in enumerate(bombs):
+            if beam is not None:
                 if beam.rct.colliderect(bomb.rct):
-                    beam,bombs[j] = None,None
+                    score.add_score(1)
+                    bombs.pop(j)  
+                    beam = None
                     bird.change_img(6, screen)
                     pg.display.update()
-                    time.sleep(1)  
-                    
+                    time.sleep(1)
+            bombs = [bomb for bomb in bombs if bomb is not None]
+        
+        # スコアの更新
+        score.update(screen)  
+            
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         if beam is not None:
@@ -187,6 +222,7 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(50)
+        
 
 
 if __name__ == "__main__":
